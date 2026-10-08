@@ -1,0 +1,42 @@
+name: Sync EasyOffer submodule
+
+# 每周一 10:00（北京时间，UTC+8，即 UTC 02:00）自动把 EasyOffer 子模块
+# 同步到上游 https://github.com/jingtian11/EasyOffer 的最新 main 分支。
+# 也可以在 GitHub Actions 页面手动触发（workflow_dispatch）。
+
+on:
+  schedule:
+    - cron: "0 2 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (with submodule)
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update EasyOffer submodule to latest main
+        run: |
+          git submodule update --remote --merge EasyOffer
+
+      - name: Commit and push if changed
+        run: |
+          if git diff --quiet HEAD -- EasyOffer; then
+            echo "EasyOffer is already up to date. Nothing to do."
+            exit 0
+          fi
+          NEW_SHA=$(git -C EasyOffer rev-parse --short HEAD)
+          OLD_SHA=$(git rev-parse --short HEAD:EasyOffer)
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add EasyOffer
+          git commit -m "chore: sync EasyOffer submodule ${OLD_SHA} -> ${NEW_SHA}"
+          git push
+          echo "Synced EasyOffer: ${OLD_SHA} -> ${NEW_SHA}"

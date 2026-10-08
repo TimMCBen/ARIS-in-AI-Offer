@@ -1,0 +1,4 @@
+[submodule "EasyOffer"]
+	path = EasyOffer
+	url = https://github.com/jingtian11/EasyOffer.git
+	branch = main
